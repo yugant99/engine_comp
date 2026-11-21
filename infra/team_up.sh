@@ -22,8 +22,7 @@ case "${1:-}" in
     ;;
   login)
     echo "Paste a key from the OpenCode Console when asked. A separate key just for this box is easiest to revoke later."
-    ARENA_SESSION=${ARENA_SESSION:-arena}
-    colab ssh -s "$ARENA_SESSION" -- bash -c "cd /home/team && $AS_TEAM opencode auth login"
+    "$BOX" tty "cd /home/team && $AS_TEAM opencode auth login"
     ;;
   start)
     N=${2:-2}

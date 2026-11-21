@@ -7,6 +7,7 @@
 #   ./infra/box.sh push            upload grader/, infra/box/ and starter/ to /arena/src on the box
 #   ./infra/box.sh pull            bring results, logs and every team's git history back to the Mac
 #   ./infra/box.sh login           open an interactive root shell on the box
+#   ./infra/box.sh tty 'CMD'       run one interactive command on the box (keeps your terminal attached)
 #   ./infra/box.sh status          sessions and compute units left
 #   ./infra/box.sh down            pull, then release the box (stops using compute units)
 #
@@ -99,7 +100,8 @@ case "${1:-}" in
   push)   cmd_push ;;
   pull)   cmd_pull ;;
   login)  cssh ;;
+  tty)    shift; cssh -- bash -c "$*" ;;
   status) cmd_status ;;
   down)   cmd_down ;;
-  *)      sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+  *)      sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac
