@@ -18,6 +18,10 @@ chown team:team /srv/arena/queue && chmod 755 /srv/arena/queue      # team write
 chmod 755 /srv/arena/results                                        # root writes results, team reads
 touch /srv/arena/gpu.lock && chmod 666 /srv/arena/gpu.lock
 
+# Colab exposes the GPU driver libraries only through root's LD_LIBRARY_PATH. Register them
+# system-wide so the unprivileged users can use the GPU too.
+echo /usr/lib64-nvidia > /etc/ld.so.conf.d/arena-nvidia.conf && ldconfig 2>/dev/null || true
+
 # Record the base image before anything else is installed, so later changes can be detected.
 if [ ! -f /arena/base_freeze.txt ]; then
   pip freeze 2>/dev/null | sort > /arena/base_freeze.txt
