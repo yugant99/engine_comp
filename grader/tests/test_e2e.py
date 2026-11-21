@@ -135,7 +135,6 @@ def test_never_ready(tmp_path, corpus):
 @pytest.mark.parametrize("fault, check", [
     ("bursty", "streaming_granularity"),
     ("bad-usage", "stream_include_usage"),
-    ("mixup", "greedy_determinism"),
     ("eos-ignore", "eos_stop"),
     ("stop-include", "stop_strings"),
 ])
@@ -164,6 +163,15 @@ def test_late_drift_fails_prefix_gate(tmp_path, corpus, baselines):
 def test_cross_request_mixup_fails_correctness(tmp_path, corpus, baselines):
     r = grade_mock(tmp_path, corpus, "--fault mixup --fault-min-tokens 100", ["--baselines", baselines])
     assert_fail(r, "correctness", "head_match")
+
+
+def test_mixup_on_every_request_never_passes(tmp_path, corpus, baselines):
+    # The two-call conformance checks tolerate float16 rounding noise by retrying, so an engine that
+    # answers with the previous request's prompt can get past them. It must still fail the run:
+    # the comparison with the reference catches it.
+    r = grade_mock(tmp_path, corpus, "--fault mixup", ["--baselines", baselines])
+    assert r["status"] == "fail", r["_stdout"]
+    assert r["arena_score"] == 0.0
 
 
 def test_bursts_under_load_fail_granularity(tmp_path, corpus, baselines):

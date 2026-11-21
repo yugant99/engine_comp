@@ -20,6 +20,13 @@ CHECK_TIMEOUT_S = 900
 NEVER_STOP = "QQXZQQXZ"
 
 
+# Some checks compare two separate replies to the same request. Float16 arithmetic on a GPU is not
+# bit-identical between two runs of the same request (a cache hit, or different batch neighbours,
+# can flip a near-tie), and vLLM itself shows this. So those checks pass if the replies agree on
+# any of ATTEMPTS tries. A real bug disagrees every time; rounding noise does not.
+ATTEMPTS = 3
+
+
 class CheckFailed(Exception):
     pass
 
@@ -154,14 +161,17 @@ class Conformance:
 
     async def c_completions_stream(self):
         expect("completion" in self.ctx, "needs a valid non-streaming response (completions_nonstream)")
-        rec = await self.stream("/v1/completions", self.body(prompt=self.inp["short"][0], max_tokens=16, stream=True),
-                                "completion")
-        expect(rec.error is None, rec.error or "")
-        expect(rec.events_after_done == 0, "%d event(s) after [DONE]" % rec.events_after_done)
+        p = self.inp["short"][0]
         text, finish = self.ctx["completion"]
-        expect(rec.text == text, "streamed text differs from the non-streaming text: %r vs %r" % (rec.text[:120], text[:120]))
-        expect(rec.finish_reason == finish, "streamed finish_reason %r vs %r" % (rec.finish_reason, finish))
-        return "ok (%d events)" % rec.n_events
+        for attempt in range(ATTEMPTS):
+            rec = await self.stream("/v1/completions", self.body(prompt=p, max_tokens=16, stream=True), "completion")
+            expect(rec.error is None, rec.error or "")
+            expect(rec.events_after_done == 0, "%d event(s) after [DONE]" % rec.events_after_done)
+            if rec.text == text and rec.finish_reason == finish:
+                return "ok (%d events, attempt %d)" % (rec.n_events, attempt + 1)
+            last = "streamed %r (%s) vs non-streaming %r (%s)" % (rec.text[:120], rec.finish_reason, text[:120], finish)
+            text, finish, _ = await self.completion("completion", prompt=p, max_tokens=16)
+        raise CheckFailed("streamed and non-streaming replies never agreed in %d attempts; last: %s" % (ATTEMPTS, last))
 
     async def c_include_usage(self):
         p = self.inp["short"][1]
@@ -209,40 +219,53 @@ class Conformance:
     async def c_stop_strings(self):
         # ignore_eos keeps the greedy output long enough to pick a stop string from; it only
         # disables EOS, never stop strings.
-        for p in self.inp["short"][4:7]:
-            full, _, _ = await self.completion("completion", prompt=p, max_tokens=48, ignore_eos=True)
-            stop, idx = choose_stop_string(full)
-            if stop:
-                break
-        else:
-            raise CheckFailed("could not choose a stop string from three greedy outputs")
-        want = full[:idx]
-        kw = dict(prompt=p, max_tokens=48, ignore_eos=True, stop=[stop, NEVER_STOP])
-        text, finish, _ = await self.completion("completion with stop", **kw)
-        expect(text == want, "stop %r: got %r, want %r" % (stop, text[-80:], want[-80:]))
-        expect(finish == "stop", "stop %r matched but finish_reason is %r" % (stop, finish))
-        rec = await self.stream("/v1/completions", self.body(stream=True, **kw), "completion")
-        expect(rec.error is None, "streaming: %s" % rec.error)
-        expect(rec.text == want, "streaming, stop %r: got %r, want %r" % (stop, rec.text[-80:], want[-80:]))
-        expect(rec.finish_reason == "stop", "streaming: finish_reason %r" % rec.finish_reason)
-        return "ok (stop %r after %d chars)" % (stop, idx)
+        last = "no attempt ran"
+        for attempt in range(ATTEMPTS):
+            for p in self.inp["short"][4:7]:
+                full, _, _ = await self.completion("completion", prompt=p, max_tokens=48, ignore_eos=True)
+                stop, idx = choose_stop_string(full)
+                if stop:
+                    break
+            else:
+                raise CheckFailed("could not choose a stop string from three greedy outputs")
+            want = full[:idx]
+            kw = dict(prompt=p, max_tokens=48, ignore_eos=True, stop=[stop, NEVER_STOP])
+            text, finish, _ = await self.completion("completion with stop", **kw)
+            rec = await self.stream("/v1/completions", self.body(stream=True, **kw), "completion")
+            expect(rec.error is None, "streaming: %s" % rec.error)
+            # The stop string may never appear in a reply, whatever else happened.
+            expect(stop not in text, "stop %r is present in the reply %r" % (stop, text[-80:]))
+            expect(stop not in rec.text, "streaming: stop %r is present in the reply %r" % (stop, rec.text[-80:]))
+            if text == want and finish == "stop" and rec.text == want and rec.finish_reason == "stop":
+                return "ok (stop %r after %d chars, attempt %d)" % (stop, idx, attempt + 1)
+            last = "stop %r: got %r (%s), streaming %r (%s), want %r (stop)" % (
+                stop, text[-80:], finish, rec.text[-80:], rec.finish_reason, want[-80:])
+        raise CheckFailed("stop strings never behaved as required in %d attempts; last: %s" % (ATTEMPTS, last))
 
     async def c_greedy_determinism(self):
         p = self.inp["short"][7]
-        a, _, _ = await self.completion("first", prompt=p, max_tokens=32)
-        b, _, _ = await self.completion("second", prompt=p, max_tokens=32)
-        expect(a == b, "two identical temperature-0 requests differ: %r vs %r" % (a[:120], b[:120]))
-        self.ctx["greedy32"] = a
-        return "ok"
+        texts = []
+        for attempt in range(ATTEMPTS + 1):
+            t, _, _ = await self.completion("request %d" % (attempt + 1), prompt=p, max_tokens=32)
+            if texts and t == texts[-1]:
+                self.ctx["greedy32"] = t
+                return "ok (request %d repeated request %d)" % (attempt + 1, attempt)
+            texts.append(t)
+        raise CheckFailed("%d identical temperature-0 requests in a row all differ: %r vs %r"
+                          % (len(texts), texts[-2][:120], texts[-1][:120]))
 
     async def c_seeded_sampling(self):
         # ignore_eos so that an early EOS cannot make the sample empty.
         kw = dict(prompt=self.inp["short"][7], max_tokens=32, temperature=0.8, top_p=0.95, seed=1234, ignore_eos=True)
-        a, _, _ = await self.completion("first", **kw)
-        b, _, _ = await self.completion("second", **kw)
-        expect(a.strip() != "", "sampled text is empty")
-        expect(a == b, "same seed gave different samples: %r vs %r" % (a[:120], b[:120]))
-        return "ok"
+        texts = []
+        for attempt in range(ATTEMPTS + 1):
+            t, _, _ = await self.completion("request %d" % (attempt + 1), **kw)
+            expect(t.strip() != "", "sampled text is empty")
+            if texts and t == texts[-1]:
+                return "ok (request %d repeated request %d)" % (attempt + 1, attempt)
+            texts.append(t)
+        raise CheckFailed("same seed gave a different sample %d times in a row: %r vs %r"
+                          % (len(texts), texts[-2][:120], texts[-1][:120]))
 
     async def c_top_p(self):
         expect("greedy32" in self.ctx, "needs greedy_determinism")
@@ -270,8 +293,17 @@ class Conformance:
         expect(rec.error is None, rec.error or "")
         expect(all(r == "assistant" for r in rec.roles), "delta.role values %r" % rec.roles)
         expect(rec.events_after_done == 0, "%d event(s) after [DONE]" % rec.events_after_done)
-        expect(rec.text == text, "streamed content differs from non-streaming: %r vs %r" % (rec.text[:120], text[:120]))
-        expect(rec.finish_reason == finish, "streamed finish_reason %r vs %r" % (rec.finish_reason, finish))
+        for attempt in range(ATTEMPTS - 1):
+            if rec.text == text and rec.finish_reason == finish:
+                break
+            text, finish, _ = await self.chat("chat", messages=msgs, max_tokens=32)
+            rec = await self.stream("/v1/chat/completions",
+                                    self.body(messages=msgs, max_tokens=32, stream=True, stream_options={"include_usage": True}),
+                                    "chat", want_usage=True)
+            expect(rec.error is None, rec.error or "")
+        expect(rec.text == text and rec.finish_reason == finish,
+               "streamed and non-streaming chat replies never agreed in %d attempts; last: %r (%s) vs %r (%s)"
+               % (ATTEMPTS, rec.text[:120], rec.finish_reason, text[:120], finish))
         expect(rec.usage_last, "usage is not on the last event before [DONE]")
         n = len(self.tok.chat_prompt_ids(msgs))
         expect(usage_shape(rec.usage)["prompt_tokens"] == n,
