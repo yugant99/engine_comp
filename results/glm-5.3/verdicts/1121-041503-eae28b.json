@@ -1,0 +1,148 @@
+{
+ "spec_version": "1",
+ "grader_version": "1.0.0",
+ "mode": "quick",
+ "commit": "95e9b209ffc9973f20f83f358a2e9033a89b4475",
+ "engine_dir": "/home/engine/runs/1121-041503-eae28b/engine",
+ "url": "http://127.0.0.1:8000",
+ "baseline_engine": false,
+ "reference_provider": "hf",
+ "calibration": false,
+ "status": "fail",
+ "fail_stage": "launch",
+ "fail_reason": "run.sh not found in the engine directory",
+ "seed": 7049581693182895436,
+ "started_at": "2026-11-21T04:15:04+00:00",
+ "finished_at": "2026-11-21T04:15:56+00:00",
+ "cold_start_s": null,
+ "health_ready_s": null,
+ "scan": {
+  "skipped": null,
+  "findings": [],
+  "warnings": [
+   "visible from system site-packages (not installed by the engine): transformers 5.22.1 (transformers) at /usr/local/lib/python3.13/dist-packages/transformers-5.22.1.dist-info",
+   "visible from system site-packages (not installed by the engine): accelerate 1.15.0 (accelerate) at /usr/local/lib/python3.13/dist-packages/accelerate-1.15.0.dist-info",
+   "visible from system site-packages (not installed by the engine): peft 0.21.2 (peft) at /usr/local/lib/python3.13/dist-packages/peft-0.21.2.dist-info"
+  ]
+ },
+ "conformance": [],
+ "conformance_informational": [],
+ "workloads": {},
+ "gates": null,
+ "ratios": {
+  "single": null,
+  "c8": null,
+  "c32": null,
+  "chat16": null
+ },
+ "arena_score": 0.0,
+ "stage_timings_s": {
+  "config": 0.001,
+  "scan": 0.0,
+  "prompts": 5.854,
+  "reference": 45.133,
+  "install": 0.115,
+  "build": 0.0,
+  "installed_scan": 0.593,
+  "cold_start": 0.002
+ },
+ "stop": null,
+ "reference": {
+  "provider": "hf",
+  "model_dir": "/arena/models/qwen2.5-1.5b-instruct",
+  "torch": "2.14.1+cu130",
+  "transformers": "5.22.1",
+  "device": "Tesla T4",
+  "dtype": "float16",
+  "attn_implementation": "sdpa",
+  "eos_token_ids": [
+   151643,
+   151645
+  ],
+  "max_batch": 32,
+  "batches": 11,
+  "requests": 67,
+  "elapsed_s": 34.805366465000134,
+  "total_s": 43.914284397999836
+ },
+ "prompts": {
+  "single": {
+   "requests": 2,
+   "prompt_token_histogram": {
+    "512": 2
+   }
+  },
+  "c8": {
+   "requests": 16,
+   "prompt_token_histogram": {
+    "64": 2,
+    "128": 3,
+    "256": 1,
+    "384": 4,
+    "512": 1,
+    "768": 3,
+    "1024": 2
+   }
+  },
+  "c32": {
+   "requests": 32,
+   "prompt_token_histogram": {
+    "64": 4,
+    "128": 8,
+    "256": 5,
+    "384": 4,
+    "512": 5,
+    "768": 1,
+    "1024": 5
+   }
+  },
+  "chat16": {
+   "requests": 16,
+   "prompt_token_histogram": {
+    "371": 5,
+    "419": 7,
+    "483": 4
+   }
+  }
+ },
+ "environment": {
+  "python": "3.13.16",
+  "platform": "linux",
+  "engine_cores": "0-3",
+  "run_as": "engine",
+  "host": "127.0.0.1",
+  "port": 8000,
+  "request_timeout_s": 120.0,
+  "grader_cpu_affinity": [
+   4,
+   5,
+   6,
+   7
+  ]
+ },
+ "engine_log": "/arena/runs/1121-041503-eae28b/result.engine.log",
+ "engine_log_tail": [
+  "",
+  "===== [grader] uv venv --system-site-packages",
+  "Using CPython 3.13.16 interpreter at: /usr/bin/python3",
+  "Creating virtual environment at: /tmp/arena-work-l6hz7g8u/engine/venv",
+  "Activate with: source /tmp/arena-work-l6hz7g8u/engine/venv/bin/activate"
+ ],
+ "baselines": {
+  "file": "/arena/baselines/baselines.json",
+  "tok_s": {
+   "single": 61.6556294808903,
+   "c8": 326.1001542181223,
+   "c32": 595.8589239733113,
+   "chat16": 337.01652635767516
+  },
+  "prefix_fraction_gate": 0.846,
+  "head_match_gate": 0.8742
+ },
+ "score": 0.0,
+ "total_s": 51.698,
+ "id": "1121-041503-eae28b",
+ "agent": "a1",
+ "grade_seconds": 52.6,
+ "gpu_processes_before_run": []
+}

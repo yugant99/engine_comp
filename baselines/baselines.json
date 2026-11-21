@@ -1,0 +1,129 @@
+{
+  "spec_version": "1",
+  "modes": {
+    "full": {
+      "tok_s": {
+        "single": 62.44625373973241,
+        "c8": 331.9994852164258,
+        "c32": 554.1112346831926,
+        "chat16": 409.85803887148774
+      },
+      "prefix_fraction_gate": 0.8643,
+      "head_match_gate": 0.9071,
+      "source": {
+        "runs": [
+          {
+            "seed": 4822534989667672968,
+            "commit": "vllm-0.33.0",
+            "finished_at": "2026-11-21T03:41:09+00:00",
+            "baseline_engine": true,
+            "tok_s": {
+              "single": 62.82864950222146,
+              "c8": 322.9147575234013,
+              "c32": 554.1112346831926,
+              "chat16": 420.4090960958722
+            },
+            "prefix_fraction": 0.9210972843646258,
+            "head_match_rate": 0.9571428571428572,
+            "min_events_per_credited_token": 1.0
+          },
+          {
+            "seed": 3307067795562335021,
+            "commit": "vllm-0.33.0",
+            "finished_at": "2026-11-21T03:46:17+00:00",
+            "baseline_engine": true,
+            "tok_s": {
+              "single": 62.44625373973241,
+              "c8": 331.9994852164258,
+              "c32": 583.6145026240151,
+              "chat16": 406.1315635226943
+            },
+            "prefix_fraction": 0.9142693218395946,
+            "head_match_rate": 0.9714285714285714,
+            "min_events_per_credited_token": 1.0
+          },
+          {
+            "seed": 539311736624648431,
+            "commit": "vllm-0.33.0",
+            "finished_at": "2026-11-21T03:51:24+00:00",
+            "baseline_engine": true,
+            "tok_s": {
+              "single": 61.8405285871358,
+              "c8": 336.6308719010076,
+              "c32": 549.6155211282069,
+              "chat16": 409.85803887148774
+            },
+            "prefix_fraction": 0.9177246481442382,
+            "head_match_rate": 0.9678571428571429,
+            "min_events_per_credited_token": 0.9836065573770492
+          }
+        ],
+        "lowest_prefix_fraction": 0.9142693218395946,
+        "lowest_head_match_rate": 0.9571428571428572,
+        "margin": 0.05
+      }
+    },
+    "quick": {
+      "tok_s": {
+        "single": 61.6556294808903,
+        "c8": 326.1001542181223,
+        "c32": 595.8589239733113,
+        "chat16": 337.01652635767516
+      },
+      "prefix_fraction_gate": 0.846,
+      "head_match_gate": 0.8742,
+      "source": {
+        "runs": [
+          {
+            "seed": 4120215280375168435,
+            "commit": "vllm-0.33.0",
+            "finished_at": "2026-11-21T03:55:01+00:00",
+            "baseline_engine": true,
+            "tok_s": {
+              "single": 61.501618786748026,
+              "c8": 326.1001542181223,
+              "c32": 591.2561752844615,
+              "chat16": 325.91170801348846
+            },
+            "prefix_fraction": 0.9202129446989058,
+            "head_match_rate": 0.9848484848484849,
+            "min_events_per_credited_token": 1.0
+          },
+          {
+            "seed": 2708285713470441472,
+            "commit": "vllm-0.33.0",
+            "finished_at": "2026-11-21T03:58:40+00:00",
+            "baseline_engine": true,
+            "tok_s": {
+              "single": 61.6556294808903,
+              "c8": 314.10592171772856,
+              "c32": 595.8589239733113,
+              "chat16": 337.01652635767516
+            },
+            "prefix_fraction": 0.8959632193951927,
+            "head_match_rate": 0.9242424242424242,
+            "min_events_per_credited_token": 1.0
+          },
+          {
+            "seed": 3175378376026019217,
+            "commit": "vllm-0.33.0",
+            "finished_at": "2026-11-21T04:02:15+00:00",
+            "baseline_engine": true,
+            "tok_s": {
+              "single": 61.734399235195156,
+              "c8": 365.8375227874674,
+              "c32": 634.5457720834603,
+              "chat16": 341.92357172112605
+            },
+            "prefix_fraction": 0.8972779107573171,
+            "head_match_rate": 0.9696969696969697,
+            "min_events_per_credited_token": 0.96875
+          }
+        ],
+        "lowest_prefix_fraction": 0.8959632193951927,
+        "lowest_head_match_rate": 0.9242424242424242,
+        "margin": 0.05
+      }
+    }
+  }
+}

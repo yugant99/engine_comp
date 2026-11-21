@@ -6,6 +6,9 @@ set -u
 N=$1
 source /home/team/team.env                 # HARNESS_CMD, e.g.: opencode run --standalone --auto -m opencode-go/glm-5.3 --format json
 export ARENA_AGENT="a$N" PATH="/home/team/.opencode/bin:/home/team/.local/bin:$PATH"
+# Agents and everything they start stay on cores 5-7. Cores 0-3 belong to the engine being graded
+# and core 4 to the grader's client, so an agent's own tests cannot disturb a measurement.
+taskset -cp 5-7 $$ > /dev/null 2>&1 || true
 cd "/home/team/a$N" || exit 1
 mkdir -p "/home/team/logs/a$N"
 while [ ! -f /home/team/STOP ]; do

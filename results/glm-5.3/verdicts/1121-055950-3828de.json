@@ -1,0 +1,467 @@
+{
+ "spec_version": "1",
+ "grader_version": "1.0.0",
+ "mode": "quick",
+ "commit": "dcc505ccfd4af179debc4f4c88e6a4d5779e07dc",
+ "engine_dir": "/home/engine/runs/1121-055950-3828de/engine",
+ "url": "http://127.0.0.1:8000",
+ "baseline_engine": false,
+ "reference_provider": "hf",
+ "calibration": false,
+ "status": "pass",
+ "fail_stage": null,
+ "fail_reason": null,
+ "seed": 64757824348717555,
+ "started_at": "2026-11-21T05:59:51+00:00",
+ "finished_at": "2026-11-21T06:01:36+00:00",
+ "cold_start_s": 12.077,
+ "health_ready_s": 12.056,
+ "scan": {
+  "skipped": null,
+  "findings": [],
+  "warnings": [
+   "visible from system site-packages (not installed by the engine): transformers 5.22.1 (transformers) at /usr/local/lib/python3.13/dist-packages/transformers-5.22.1.dist-info",
+   "visible from system site-packages (not installed by the engine): accelerate 1.15.0 (accelerate) at /usr/local/lib/python3.13/dist-packages/accelerate-1.15.0.dist-info",
+   "visible from system site-packages (not installed by the engine): peft 0.21.2 (peft) at /usr/local/lib/python3.13/dist-packages/peft-0.21.2.dist-info"
+  ]
+ },
+ "conformance": [
+  {
+   "name": "health",
+   "passed": true,
+   "detail": "200",
+   "spec": "GET /health: 200 once the model is loaded",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "completions_nonstream",
+   "passed": true,
+   "detail": "ok (finish_reason length, 16 tokens)",
+   "spec": "POST /v1/completions non-streaming response shape and usage",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "completions_stream",
+   "passed": true,
+   "detail": "ok (17 events, attempt 2)",
+   "spec": "streaming: data: {json} events, choices[0].text, then data: [DONE]; last event with choices carries finish_reason",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "stream_include_usage",
+   "passed": true,
+   "detail": "ok",
+   "spec": "stream_options.include_usage: the last event before [DONE] carries usage",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "max_tokens",
+   "passed": true,
+   "detail": "ok (8 tokens, text re-tokenizes to 8)",
+   "spec": "max_tokens: upper bound on generated tokens",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "ignore_eos",
+   "passed": true,
+   "detail": "ok",
+   "spec": "ignore_eos: never stop on EOS; generate exactly max_tokens tokens",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "eos_stop",
+   "passed": true,
+   "detail": "ok ('yes')",
+   "spec": "finish_reason is 'stop' when the model emitted an end-of-sequence token",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "stop_strings",
+   "passed": true,
+   "detail": "ok (stop 'Show' after 76 chars, attempt 1)",
+   "spec": "stop: stop before emitting any of these; the stop string is not included",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "greedy_determinism",
+   "passed": true,
+   "detail": "ok (request 2 repeated request 1)",
+   "spec": "temperature 0 means greedy (argmax)",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "seeded_sampling",
+   "passed": true,
+   "detail": "ok (request 2 repeated request 1)",
+   "spec": "seed: same seed, same request, same engine state gives the same sample",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "chat_nonstream",
+   "passed": true,
+   "detail": "ok (103 prompt tokens)",
+   "spec": "chat: choices[0].message; usage.prompt_tokens equals the templated prompt",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "chat_stream",
+   "passed": true,
+   "detail": "ok",
+   "spec": "chat streaming: choices[0].delta.content; first event may carry delta.role",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "streaming_granularity",
+   "passed": true,
+   "detail": "ok (64 text events, 64 tokens)",
+   "spec": "each token flushed as soon as decodable; no bursts (text events >= 0.5 per token)",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "long_prompt_accepted",
+   "passed": true,
+   "detail": "ok (4000 + 64 tokens)",
+   "spec": "requests up to 4,096 tokens (prompt + output) are served",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "errors",
+   "passed": true,
+   "detail": "ok (5 cases)",
+   "spec": "malformed JSON, missing prompt, over-length: HTTP 400 with a JSON body; server keeps serving",
+   "enforced": true,
+   "baseline_exempt": false
+  },
+  {
+   "name": "concurrent_64",
+   "passed": true,
+   "detail": "ok (64 requests)",
+   "spec": "64 concurrent short requests all succeed",
+   "enforced": true,
+   "baseline_exempt": false
+  }
+ ],
+ "conformance_informational": [
+  {
+   "name": "top_p",
+   "passed": true,
+   "detail": "ok",
+   "spec": "top_p: nucleus sampling (tiny top_p keeps only the top token); informational",
+   "enforced": false,
+   "baseline_exempt": false
+  },
+  {
+   "name": "streaming_spread",
+   "passed": true,
+   "detail": "text events span 98% of the request time",
+   "spec": "no holding back output: text events spread over the request; informational",
+   "enforced": false,
+   "baseline_exempt": false
+  }
+ ],
+ "workloads": {
+  "single": {
+   "clients": 1,
+   "requests_planned": 2,
+   "requests_completed": 2,
+   "requests_failed": 0,
+   "failure": null,
+   "credited_tokens": 256,
+   "wall_s": 4.316701616999126,
+   "output_tok_s": 59.30453913976233,
+   "ttft_p50_s": 0.05978416899961303,
+   "ttft_p95_s": 0.06652732299880881,
+   "tpot_p50_s": 0.01646769208662046,
+   "tpot_p95_s": 0.016523951566928798,
+   "e2e_p50_s": 2.1580731549984193,
+   "e2e_p95_s": 2.158592244000829,
+   "ttft_samples": 2,
+   "tpot_samples": 2,
+   "head_match_rate": 1.0,
+   "head_match_count": 2,
+   "prefix_fraction": 0.5768463073852296,
+   "full_match_count": 1,
+   "usage_checked": 1,
+   "usage_failures": 0,
+   "granularity_failures": 0,
+   "min_events_per_credited_token": 1.0,
+   "overruns": 0,
+   "finish_reason_mismatches": 0,
+   "tok_s": 59.30453913976233,
+   "ratio": 0.9618673856560549,
+   "ttft_p50": 0.05978416899961303,
+   "ttft_p95": 0.06652732299880881
+  },
+  "c8": {
+   "clients": 8,
+   "requests_planned": 16,
+   "requests_completed": 16,
+   "requests_failed": 0,
+   "failure": null,
+   "credited_tokens": 2048,
+   "wall_s": 6.74618759400073,
+   "output_tok_s": 303.5788690224463,
+   "ttft_p50_s": 0.3361659999991389,
+   "ttft_p95_s": 0.7191698709993943,
+   "tpot_p50_s": 0.023979359598421627,
+   "tpot_p95_s": 0.02672257560630882,
+   "e2e_p50_s": 3.292494209999859,
+   "e2e_p95_s": 3.45344434099934,
+   "ttft_samples": 16,
+   "tpot_samples": 16,
+   "head_match_rate": 0.875,
+   "head_match_count": 14,
+   "prefix_fraction": 0.830944169821917,
+   "full_match_count": 13,
+   "usage_checked": 13,
+   "usage_failures": 0,
+   "granularity_failures": 0,
+   "min_events_per_credited_token": 1.0,
+   "overruns": 0,
+   "finish_reason_mismatches": 0,
+   "tok_s": 303.5788690224463,
+   "ratio": 0.9309375205612079,
+   "ttft_p50": 0.3361659999991389,
+   "ttft_p95": 0.7191698709993943
+  },
+  "c32": {
+   "clients": 32,
+   "requests_planned": 32,
+   "requests_completed": 32,
+   "requests_failed": 0,
+   "failure": null,
+   "credited_tokens": 4095,
+   "wall_s": 7.203486196000085,
+   "output_tok_s": 568.4747480010235,
+   "ttft_p50_s": 1.275856219999696,
+   "ttft_p95_s": 2.707678020999083,
+   "tpot_p50_s": 0.045774958078741684,
+   "tpot_p95_s": 0.05472187316535576,
+   "e2e_p50_s": 7.199294004998592,
+   "e2e_p95_s": 7.200135110999327,
+   "ttft_samples": 32,
+   "tpot_samples": 32,
+   "head_match_rate": 0.9375,
+   "head_match_count": 30,
+   "prefix_fraction": 0.8753553401052465,
+   "full_match_count": 26,
+   "usage_checked": 26,
+   "usage_failures": 0,
+   "granularity_failures": 0,
+   "min_events_per_credited_token": 1.0,
+   "overruns": 0,
+   "finish_reason_mismatches": 0,
+   "tok_s": 568.4747480010235,
+   "ratio": 0.9540425176656171,
+   "ttft_p50": 1.275856219999696,
+   "ttft_p95": 2.707678020999083
+  },
+  "chat16": {
+   "clients": 16,
+   "requests_planned": 16,
+   "requests_completed": 16,
+   "requests_failed": 0,
+   "failure": null,
+   "credited_tokens": 508,
+   "wall_s": 1.7928207559998555,
+   "output_tok_s": 283.3523643118961,
+   "ttft_p50_s": 0.23395499199978076,
+   "ttft_p95_s": 0.44480772799943225,
+   "tpot_p50_s": 0.029093525219517375,
+   "tpot_p95_s": 0.04267550863158632,
+   "e2e_p50_s": 1.0311904160007543,
+   "e2e_p95_s": 1.7912354359996243,
+   "ttft_samples": 16,
+   "tpot_samples": 16,
+   "head_match_rate": 0.9375,
+   "head_match_count": 15,
+   "prefix_fraction": 0.9546705210365004,
+   "full_match_count": 14,
+   "usage_checked": 14,
+   "usage_failures": 0,
+   "granularity_failures": 0,
+   "min_events_per_credited_token": 1.0,
+   "overruns": 0,
+   "finish_reason_mismatches": 0,
+   "tok_s": 283.3523643118961,
+   "ratio": 0.8407669717988092,
+   "ttft_p50": 0.23395499199978076,
+   "ttft_p95": 0.44480772799943225
+  }
+ },
+ "gates": {
+  "enforced": true,
+  "scope": "pooled over all workload requests",
+  "head_match": {
+   "value": 0.9242424242424242,
+   "threshold": 0.8742,
+   "passed": true
+  },
+  "prefix_fraction": {
+   "value": 0.8747711901798942,
+   "threshold": 0.846,
+   "passed": true
+  },
+  "usage": {
+   "value": 0,
+   "threshold": 0,
+   "checked": 54,
+   "passed": true
+  },
+  "streaming_granularity": {
+   "value": 0,
+   "threshold": 0,
+   "min_events_per_credited_token": 1.0,
+   "passed": true
+  },
+  "failed": []
+ },
+ "ratios": {
+  "single": 0.9618673856560549,
+  "c8": 0.9309375205612079,
+  "c32": 0.9540425176656171,
+  "chat16": 0.8407669717988092
+ },
+ "arena_score": 0.920597469050963,
+ "stage_timings_s": {
+  "config": 0.001,
+  "scan": 0.094,
+  "prompts": 6.565,
+  "reference": 48.611,
+  "install": 0.115,
+  "build": 0.0,
+  "installed_scan": 0.605,
+  "cold_start": 12.08,
+  "conformance": 16.292,
+  "workload_single": 4.317,
+  "workload_c8": 6.748,
+  "workload_c32": 7.206,
+  "workload_chat16": 1.795,
+  "stop": 0.306,
+  "correctness": 0.01,
+  "post_run_scan": 0.586
+ },
+ "stop": {
+  "started": true,
+  "sigterm_exit_s": 0.301,
+  "killed": false,
+  "exit_code": -15,
+  "killed_leftover_user_processes": false,
+  "port_closed": true
+ },
+ "reference": {
+  "provider": "hf",
+  "model_dir": "/arena/models/qwen2.5-1.5b-instruct",
+  "torch": "2.14.1+cu130",
+  "transformers": "5.22.1",
+  "device": "Tesla T4",
+  "dtype": "float16",
+  "attn_implementation": "sdpa",
+  "eos_token_ids": [
+   151643,
+   151645
+  ],
+  "max_batch": 32,
+  "batches": 11,
+  "requests": 67,
+  "elapsed_s": 38.11484008499974,
+  "total_s": 47.27390091600137
+ },
+ "prompts": {
+  "single": {
+   "requests": 2,
+   "prompt_token_histogram": {
+    "512": 2
+   }
+  },
+  "c8": {
+   "requests": 16,
+   "prompt_token_histogram": {
+    "64": 2,
+    "128": 2,
+    "256": 2,
+    "384": 1,
+    "512": 1,
+    "768": 4,
+    "1024": 4
+   }
+  },
+  "c32": {
+   "requests": 32,
+   "prompt_token_histogram": {
+    "64": 1,
+    "128": 4,
+    "256": 4,
+    "384": 3,
+    "512": 6,
+    "768": 4,
+    "1024": 10
+   }
+  },
+  "chat16": {
+   "requests": 16,
+   "prompt_token_histogram": {
+    "371": 6,
+    "419": 6,
+    "483": 4
+   }
+  }
+ },
+ "environment": {
+  "python": "3.13.16",
+  "platform": "linux",
+  "engine_cores": "0-3",
+  "run_as": "engine",
+  "host": "127.0.0.1",
+  "port": 8000,
+  "request_timeout_s": 120.0,
+  "grader_cpu_affinity": [
+   4,
+   5,
+   6,
+   7
+  ]
+ },
+ "engine_log": "/arena/runs/1121-055950-3828de/result.engine.log",
+ "engine_log_tail": [
+  "",
+  "===== [grader] uv venv --system-site-packages",
+  "Using CPython 3.13.16 interpreter at: /usr/bin/python3",
+  "Creating virtual environment at: /tmp/arena-work-v_iqohik/engine/venv",
+  "Activate with: source /tmp/arena-work-v_iqohik/engine/venv/bin/activate",
+  "",
+  "===== [grader] start: setpriv --reuid=1002 --regid=1002 --init-groups -- taskset -c 0-3 bash run.sh",
+  "INFO:engine:captured 36 decode graphs (9x4) in 4.09 s"
+ ],
+ "baselines": {
+  "file": "/arena/baselines/baselines.json",
+  "tok_s": {
+   "single": 61.6556294808903,
+   "c8": 326.1001542181223,
+   "c32": 595.8589239733113,
+   "chat16": 337.01652635767516
+  },
+  "prefix_fraction_gate": 0.846,
+  "head_match_gate": 0.8742
+ },
+ "score": 0.920597469050963,
+ "total_s": 105.331,
+ "id": "1121-055950-3828de",
+ "agent": "a5",
+ "grade_seconds": 106.2,
+ "gpu_processes_before_run": []
+}
