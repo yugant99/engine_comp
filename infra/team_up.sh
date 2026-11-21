@@ -5,12 +5,13 @@
 #   ./infra/team_up.sh login        sign opencode in on the box (you paste your OpenCode Go key)
 #   ./infra/team_up.sh start N      start the grading daemon and N agents (default 2)
 #   ./infra/team_up.sh watch        sessions so far, latest verdicts, GPU and memory
+#   ./infra/team_up.sh tail N       what agent N is doing right now: its words, commands and files (default 1)
 #   ./infra/team_up.sh stop         stop every agent after its current step (the grader keeps running)
 #
 # The agents run on the box as an unprivileged user. They never run on this Mac and never see
 # anything on it.
 set -euo pipefail
-HERE="$(cd "$(dirname "$0")" && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd -P)"
 BOX="$HERE/box.sh"
 OPENCODE_VERSION=2.0.27
 AS_TEAM='setpriv --reuid team --regid team --init-groups env -i HOME=/home/team USER=team TERM=xterm PATH=/home/team/.opencode/bin:/usr/local/bin:/usr/bin:/bin'
@@ -43,8 +44,11 @@ case "${1:-}" in
       echo '== box'; nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader; free -g | sed -n 2p; uptime
       echo '== notes (last lines)'; git -c safe.directory='*' --git-dir=/home/team/repo.git show main:NOTES.md 2>/dev/null | tail -15"
     ;;
+  tail)
+    "$BOX" sh "python3 /arena/src/infra/box/show_session.py a${2:-1} ${3:-40}"
+    ;;
   stop)
     "$BOX" sh "touch /home/team/STOP; chown team:team /home/team/STOP; echo 'Agents will stop after their current session. To stop them now: pkill -u team'"
     ;;
-  *) sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+  *) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

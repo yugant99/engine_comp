@@ -15,7 +15,7 @@ set -euo pipefail
 export PATH="$HOME/.local/bin:$PATH"
 
 SESSION=${ARENA_SESSION:-arena}
-HERE="$(cd "$(dirname "$0")" && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd -P)"
 ROOT="$(dirname "$HERE")"
 TMP="${TMPDIR:-/tmp}"
 
