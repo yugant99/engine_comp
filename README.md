@@ -8,8 +8,9 @@ starter kit and the same box, and builds an OpenAI-compatible inference server f
 submission on the same NVIDIA T4, checks its output against a reference, and scores its speed
 against vLLM measured on that same box.
 
-**Status:** the spec, grader and grading box are working and the vLLM baseline is measured
-(see [`BASELINES.md`](BASELINES.md)). No team has produced an engine yet.
+**Status:** the first team (GLM 5.3 through opencode) reached an arena score of 1.00, matching vLLM
+within run-to-run noise, about two hours after starting from an empty repository. That is an interim,
+single-run figure: see [`results/glm-5.3/`](results/glm-5.3/README.md). Other teams have not run yet.
 
 | | |
 |---|---|
