@@ -28,6 +28,14 @@ case "${1:-}" in
   start)
     N=${2:-2}
     "$BOX" push
+    # A rebuilt box has no team repository. Put the last backup back before anything else, so the
+    # agents continue from where they were.
+    BACKUP="$(dirname "$HERE")/results/box/home/team/repo.git"
+    if [ -d "$BACKUP" ] && [ "$("$BOX" sh 'test -d /home/team/repo.git && echo yes || echo no' | tail -1)" = no ]; then
+      echo "Restoring the team repository from the last backup..."
+      ( cd "$(dirname "$BACKUP")" && COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -czf - repo.git ) \
+        | "$BOX" tty 'tar -xzf - -C /home/team && chown -R team:team /home/team/repo.git && echo restored'
+    fi
     "$BOX" sh "chmod -R a+rX /arena/src && bash /arena/src/infra/box/setup_team.sh $N
       # Each daemon is ONE simple command sent to the background with its output redirected. A
       # backgrounded list (a && b &, or a || b &) leaves a shell holding the SSH connection open.

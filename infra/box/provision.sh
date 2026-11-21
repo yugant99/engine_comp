@@ -18,6 +18,13 @@ chown team:team /srv/arena/queue && chmod 755 /srv/arena/queue      # team write
 chmod 755 /srv/arena/results                                        # root writes results, team reads
 touch /srv/arena/gpu.lock && chmod 666 /srv/arena/gpu.lock
 
+# The measured vLLM baseline travels with the repository, so a rebuilt box grades against the same
+# numbers. (A new box is a different physical machine: re-check with one vLLM run before trusting it.)
+if [ -f /arena/src/baselines/baselines.json ] && [ ! -f /arena/baselines/baselines.json ]; then
+  cp /arena/src/baselines/baselines.json /arena/src/BASELINES.md /arena/baselines/ 2>/dev/null || true
+  chmod a+r /arena/baselines/* 2>/dev/null || true
+fi
+
 # Colab exposes the GPU driver libraries only through root's LD_LIBRARY_PATH. Register them
 # system-wide so the unprivileged users can use the GPU too.
 echo /usr/lib64-nvidia > /etc/ld.so.conf.d/arena-nvidia.conf && ldconfig 2>/dev/null || true
