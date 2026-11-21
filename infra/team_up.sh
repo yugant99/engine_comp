@@ -7,6 +7,7 @@
 #   ./infra/team_up.sh watch        sessions so far, latest verdicts, GPU and memory
 #   ./infra/team_up.sh tail N       what agent N is doing right now: its words, commands and files (default 1)
 #   ./infra/team_up.sh report       every verdict with its numbers, and each agent's token use and cost
+#   ./infra/team_up.sh halt         stop every agent NOW, saving unfinished work into git first
 #   ./infra/team_up.sh stop         stop every agent after its current step (the grader keeps running)
 #
 # The agents run on the box as an unprivileged user. They never run on this Mac and never see
@@ -59,11 +60,14 @@ case "${1:-}" in
   tail)
     "$BOX" sh "python3 /arena/src/infra/box/show_session.py a${2:-1} ${3:-40}"
     ;;
+  halt)
+    "$BOX" sh "bash /arena/src/infra/box/halt_team.sh"
+    ;;
   report)
     "$BOX" sh "python3 /arena/src/infra/box/report.py"
     ;;
   stop)
     "$BOX" sh "touch /home/team/STOP; chown team:team /home/team/STOP; echo 'Agents will stop after their current session. To stop them now: pkill -u team'"
     ;;
-  *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+  *) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac
