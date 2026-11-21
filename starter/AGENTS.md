@@ -17,8 +17,10 @@ of 1.00 means as fast as vLLM. Correctness comes first: a fast engine that fails
   `tokenizer_config.json` and `generation_config.json` there.
 - Base Python is 3.13 with `torch`, `triton`, `safetensors`, `tokenizers`, `numpy`, `fastapi`,
   `uvicorn` and `aiohttp`. `transformers` is installed on the box for the grader; **your engine may
-  not import it** (see SPEC section 2). You may use it in throwaway test scripts to check your own
-  numbers, as long as nothing the engine needs depends on it.
+  not import it** (see SPEC section 2). You may use it in throwaway scripts to check your own
+  numbers, but keep those scripts **outside the repository** (for example in `~/scratch`): the
+  grader scans every committed file, and a committed file that imports a banned package fails
+  the run.
 - No web access. Do not try to download source code. Everything you need is in SPEC.md and the
   model folder.
 
