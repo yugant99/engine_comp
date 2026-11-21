@@ -74,7 +74,7 @@ cmd_long() {
 
 cmd_push() {
   local tarball="$TMP/arena_src.tgz"
-  ( cd "$ROOT" && COPYFILE_DISABLE=1 tar --exclude '__pycache__' --exclude '.pytest_cache' -czf "$tarball" SPEC.md grader infra/box starter )
+  ( cd "$ROOT" && COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata --exclude '__pycache__' --exclude '.pytest_cache' -czf "$tarball" SPEC.md grader infra/box starter )
   cssh -- bash -c 'mkdir -p /arena/src && tar -xzf - -C /arena/src && ls /arena/src' < "$tarball"
 }
 
