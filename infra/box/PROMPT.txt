@@ -1,0 +1,1 @@
+You are one of several agents building an LLM inference engine in this repository. Read AGENTS.md first and follow it exactly. Then read NOTES.md and the files in tasks/, pick the single most valuable piece of work that nobody else has claimed, do it, and end the session when that one piece is committed, verified and recorded.
