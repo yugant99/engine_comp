@@ -4,7 +4,10 @@ Each team is one AI model driving one coding-agent harness. Every team gets this
 starter kit and the same box, and must build an LLM inference server **from scratch**. A grader
 measures every engine on the same GPU against vLLM.
 
-This file is the contract. It does not change after the first team starts. Anything a later
+This file is the contract. It does not change after the first team starts. (One amendment was made
+on 2026-11-20, before any team started: the head-match gate was a fixed 98%, which vLLM itself
+missed in 5 of 6 calibration runs because of float16 rounding. It is now calibrated from vLLM, like
+the prefix gate.) Anything a later
 version adds will be a new, separately labelled track.
 
 ## 1. Target
@@ -142,11 +145,13 @@ exact token lengths and the reference only batches prompts of equal length, so i
 
 For every workload request the grader compares the engine's text with the reference text:
 
-- **Head match:** the engine's text must start with the reference's first 16 tokens. At least 98%
-  of requests must pass.
+- **Head match:** the engine's text must start with the reference's first 16 tokens. The share of
+  requests that pass is the head-match rate.
 - **Prefix fraction:** matched prefix length divided by reference length, averaged over requests.
-  It must be at least the gate in `BASELINES.md`. The gate is set from what vLLM itself scores
-  against the same reference on the same box, minus a small margin, and is the same for every team.
+
+Both are pooled over all workload requests of a run, and both must be at least the gates in
+`BASELINES.md`. The gates are set from what vLLM itself scores against the same reference on the
+same box (its lowest run, minus a small margin), and are the same for every team.
 
 Float16 arithmetic differs slightly between implementations, so a late divergence on a near-tie is
 tolerated. Garbage, another request's text, or systematic drift is not.

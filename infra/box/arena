@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""arena: the only door between a team's agents and the GPU.
+
+  arena submit --quick     grade the current commit on a reduced workload (a few minutes)
+  arena submit             grade the current commit on the full workload (counts for the result)
+  arena gpu -- CMD ...     run CMD with the GPU, queued behind the grader, 180 s limit
+  arena status             queue length and the latest verdicts
+  arena result ID          print one full verdict
+"""
+import fcntl
+import json
+import os
+import subprocess
+import sys
+import time
+import uuid
+from pathlib import Path
+
+QUEUE = Path("/srv/arena/queue")
+RESULTS = Path("/srv/arena/results")
+SCOREBOARD = Path("/srv/arena/scoreboard.jsonl")
+GPU_LOCK = "/srv/arena/gpu.lock"
+GPU_LIMIT_S = 180
+WAIT_LIMIT_S = 90 * 60
+
+
+def sh(*cmd):
+    return subprocess.run(cmd, capture_output=True, text=True)
+
+
+def print_verdict(r):
+    print(f"\n=== verdict {r.get('id')} ({r.get('mode')}) commit {str(r.get('commit'))[:10]} ===")
+    print(f"status: {r.get('status')}   arena score: {r.get('score')}")
+    if r.get("status") != "pass":
+        print(f"failed at: {r.get('fail_stage')}\nreason: {r.get('fail_reason')}")
+    if r.get("cold_start_s") is not None:
+        print(f"cold start: {r['cold_start_s']} s")
+    for c in r.get("conformance") or []:
+        if not c.get("passed"):
+            print(f"conformance FAIL {c.get('name')}: {c.get('detail')}")
+    for name, w in (r.get("workloads") or {}).items():
+        if isinstance(w, dict):
+            keys = ("tok_s", "ratio", "ttft_p50", "ttft_p95", "head_match_rate", "prefix_fraction")
+            print(f"{name:7s} " + "  ".join(f"{k}={w[k]}" for k in keys if w.get(k) is not None))
+    if r.get("status") != "pass" and r.get("engine_log_tail"):
+        tail = r["engine_log_tail"]
+        print("--- last lines of your engine's log ---")
+        print(tail if isinstance(tail, str) else "\n".join(tail))
+    print(f"full verdict: {RESULTS / (str(r.get('id')) + '.json')}")
+
+
+def cmd_submit(args):
+    mode = "quick" if "--quick" in args else "full"
+    if sh("git", "status", "--porcelain").stdout.strip():
+        sys.exit("Uncommitted changes. Commit first: the grader grades a commit, not your working folder.")
+    commit = sh("git", "rev-parse", "HEAD").stdout.strip()
+    if not commit:
+        sys.exit("Not inside a git repository.")
+    rid = time.strftime("%m%d-%H%M%S-") + uuid.uuid4().hex[:6]
+    push = sh("git", "push", "-q", "origin", f"{commit}:refs/submissions/{rid}")
+    if push.returncode != 0:
+        sys.exit("Could not push the commit to origin:\n" + push.stderr)
+    agent = os.environ.get("ARENA_AGENT", Path.cwd().name)
+    tmp = QUEUE / f".{rid}.tmp"
+    tmp.write_text(json.dumps({"commit": commit, "mode": mode, "agent": agent}))
+    os.replace(tmp, QUEUE / f"{rid}.json")
+    ahead = len(list(QUEUE.glob("*.json"))) - 1
+    print(f"submitted {rid} ({mode}) commit {commit[:10]}; {ahead} ahead in the queue. Waiting for the verdict...", flush=True)
+    result = RESULTS / f"{rid}.json"
+    start = time.time()
+    while not result.exists():
+        if time.time() - start > WAIT_LIMIT_S:
+            sys.exit(f"No verdict after {WAIT_LIMIT_S // 60} minutes. Check `arena status` later; the id is {rid}.")
+        time.sleep(5)
+    print_verdict(json.loads(result.read_text()))
+
+
+def cmd_gpu(args):
+    if args and args[0] == "--":
+        args = args[1:]
+    if not args:
+        sys.exit("usage: arena gpu -- CMD ...")
+    with open(GPU_LOCK, "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            rc = subprocess.run(["timeout", "-k", "5", str(GPU_LIMIT_S)] + args).returncode
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+    if rc == 124:
+        print(f"arena gpu: stopped after the {GPU_LIMIT_S} s limit", file=sys.stderr)
+    sys.exit(rc)
+
+
+def cmd_status(_):
+    print(f"queue: {len(list(QUEUE.glob('*.json')))} waiting")
+    if SCOREBOARD.exists():
+        for line in SCOREBOARD.read_text().splitlines()[-12:]:
+            r = json.loads(line)
+            print(f"{r['time']} {r['id']} {str(r.get('agent')):4s} {r.get('mode'):5s} {r.get('status'):4s} "
+                  f"score={r.get('score')} stage={r.get('fail_stage')} tok_s={r.get('tok_s')}")
+
+
+def cmd_result(args):
+    print_verdict(json.loads((RESULTS / f"{args[0]}.json").read_text()))
+
+
+def main():
+    cmds = {"submit": cmd_submit, "gpu": cmd_gpu, "status": cmd_status, "result": cmd_result}
+    if len(sys.argv) < 2 or sys.argv[1] not in cmds:
+        sys.exit(__doc__)
+    cmds[sys.argv[1]](sys.argv[2:])
+
+
+if __name__ == "__main__":
+    main()
