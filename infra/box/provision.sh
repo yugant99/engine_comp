@@ -62,7 +62,10 @@ if [ ! -x /arena/venvs/vllm/bin/vllm ]; then
      >> /arena/logs/vllm_install.log 2>&1
 fi
 /arena/venvs/vllm/bin/python -c "import vllm, torch; print('vllm', vllm.__version__, 'torch', torch.__version__)"
-chmod -R a+rX /arena/venvs
+# Only root and the `baseline` user may read vLLM. Otherwise a team could launch it from run.sh, or
+# copy from its source.
+id baseline >/dev/null 2>&1 || useradd -m -s /bin/bash baseline
+chgrp -R baseline /arena/venvs && chmod -R g+rX,o-rwx /arena/venvs
 
 # The base image must be untouched.
 if pip freeze 2>/dev/null | sort | diff -q - /arena/base_freeze.txt >/dev/null; then

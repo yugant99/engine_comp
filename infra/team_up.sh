@@ -28,11 +28,15 @@ case "${1:-}" in
     N=${2:-2}
     "$BOX" push
     "$BOX" sh "chmod -R a+rX /arena/src && bash /arena/src/infra/box/setup_team.sh $N
-      pgrep -f graderd.py >/dev/null || { cd /arena/src && setsid nohup python3 infra/box/graderd.py >> /arena/logs/graderd.log 2>&1 < /dev/null & }
+      # Each daemon is ONE simple command sent to the background with its output redirected. A
+      # backgrounded list (a && b &, or a || b &) leaves a shell holding the SSH connection open.
+      if ! pgrep -f graderd.py >/dev/null; then
+        setsid nohup bash -c 'cd /arena/src && exec python3 infra/box/graderd.py' >> /arena/logs/graderd.log 2>&1 < /dev/null &
+      fi
       rm -f /home/team/STOP
       for i in \$(seq 1 $N); do
-        pgrep -u team -f \"run_agent.sh \$i\" >/dev/null && { echo \"agent a\$i already running\"; continue; }
-        cd /home/team && setsid $AS_TEAM nohup bash /arena/src/infra/box/run_agent.sh \$i >> /home/team/logs/runner_a\$i.log 2>&1 < /dev/null &
+        if pgrep -u team -f \"run_agent.sh \$i\" >/dev/null; then echo \"agent a\$i already running\"; continue; fi
+        setsid $AS_TEAM nohup bash -c \"cd /home/team && exec bash /arena/src/infra/box/run_agent.sh \$i\" >> /home/team/logs/runner_a\$i.log 2>&1 < /dev/null &
         echo \"started agent a\$i\"
       done
       sleep 2; pgrep -fa 'graderd.py|run_agent.sh' | cut -c1-80"

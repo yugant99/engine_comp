@@ -65,7 +65,7 @@ def make_engine(dirpath, mock_args="", run_sh=None, files=None):
 
 
 def quick_baselines(path, gate=0.9, modes=("quick",)):
-    entry = {"tok_s": {"single": 100.0, "c8": 400.0, "c32": 800.0, "chat16": 400.0}, "prefix_fraction_gate": gate}
+    entry = {"tok_s": {"single": 100.0, "c8": 400.0, "c32": 800.0, "chat16": 400.0}, "prefix_fraction_gate": gate, "head_match_gate": 0.98}
     with open(path, "w") as f:
         json.dump({"spec_version": "1", "modes": {m: entry for m in modes}}, f)
     return str(path)

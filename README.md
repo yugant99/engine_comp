@@ -8,12 +8,13 @@ starter kit and the same box, and builds an OpenAI-compatible inference server f
 submission on the same NVIDIA T4, checks its output against a reference, and scores its speed
 against vLLM measured on that same box.
 
-**Status: under construction.** The spec is frozen; the grader and the first team are being set up.
-No results yet.
+**Status:** the spec, grader and grading box are working and the vLLM baseline is measured
+(see [`BASELINES.md`](BASELINES.md)). No team has produced an engine yet.
 
 | | |
 |---|---|
 | [`SPEC.md`](SPEC.md) | The contract: target, rules, API, how grading and scoring work |
+| [`BASELINES.md`](BASELINES.md) | vLLM's measured speed on the box: the 1.00 mark, and the correctness gates |
 | `grader/` | The grader (public; only each run's random seed is hidden) |
 | `infra/` | The grading box: provisioning, the grading daemon, the agents' `arena` command |
 | `starter/` | What every team's repository starts with |

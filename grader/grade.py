@@ -91,9 +91,10 @@ def load_baselines(path, mode):
     for w in WORKLOAD_ORDER:
         if not isinstance(tok_s.get(w), (int, float)) or tok_s[w] <= 0:
             raise ValueError("baselines tok_s.%s missing or not positive" % w)
-    gate = b.get("prefix_fraction_gate")
-    if not isinstance(gate, (int, float)) or not 0.0 <= gate <= 1.0:
-        raise ValueError("baselines prefix_fraction_gate missing or not in [0, 1]")
+    for key in ("prefix_fraction_gate", "head_match_gate"):
+        gate = b.get(key)
+        if not isinstance(gate, (int, float)) or not 0.0 <= gate <= 1.0:
+            raise ValueError("baselines %s missing or not in [0, 1]" % key)
     return b
 
 
@@ -492,7 +493,8 @@ class Grader:
         if not all_checks:
             return None
         gate = self.baselines["prefix_fraction_gate"] if self.baselines else None
-        g = checkmod.gates(all_checks, gate, enforced=not self.result["calibration"])
+        head_gate = self.baselines["head_match_gate"] if self.baselines else None
+        g = checkmod.gates(all_checks, gate, enforced=not self.result["calibration"], head_gate=head_gate)
         self.result["gates"] = g
         return checkmod.describe_gate_failures(g) if g["failed"] else None
 
@@ -514,7 +516,8 @@ class Grader:
                 ratios[w] = None if tps is None else tps / self.baselines["tok_s"][w]
             r["ratios"] = ratios
             r["baselines"] = {"file": os.path.abspath(a.baselines), "tok_s": self.baselines["tok_s"],
-                              "prefix_fraction_gate": self.baselines["prefix_fraction_gate"]}
+                              "prefix_fraction_gate": self.baselines["prefix_fraction_gate"],
+                              "head_match_gate": self.baselines["head_match_gate"]}
         if r["status"] != "pass":
             r["arena_score"] = 0.0
         elif self.baselines:

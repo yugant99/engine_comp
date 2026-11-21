@@ -206,7 +206,10 @@ def test_time_budget_ends_a_slow_run_with_a_result(tmp_path, corpus):
 def test_calibration_reports_but_does_not_enforce_gates(tmp_path, corpus):
     r = grade_mock(tmp_path, corpus, "--fault wrong-after:4 --fault-min-tokens 100")
     assert r["status"] == "pass"
-    assert r["gates"]["enforced"] is False and "head_match" in r["gates"]["failed"]
+    # Calibration has no head-match or prefix thresholds yet (make_baselines sets them from these
+    # runs), so the values are reported and nothing is judged.
+    assert r["gates"]["enforced"] is False
+    assert r["gates"]["head_match"]["value"] < 0.9 and r["gates"]["head_match"]["passed"] is None
 
 
 # ---------------------------------------------------------------- informational checks and stop

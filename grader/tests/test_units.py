@@ -273,7 +273,10 @@ def test_scan_installed_local_vs_system(tmp_path):
 def _calibration_run(mode, scale, pf, failed=()):
     return {"mode": mode, "status": "pass", "calibration": True, "seed": 1, "baseline_engine": True,
             "workloads": {w: {"output_tok_s": scale * k} for k, w in enumerate(["single", "c8", "c32", "chat16"], 1)},
-            "gates": {"prefix_fraction": {"value": pf}, "head_match": {"value": 1.0}, "failed": list(failed)}}
+            "gates": {"prefix_fraction": {"value": pf}, "head_match": {"value": pf + 0.01},
+                      "usage": {"passed": "usage" not in failed},
+                      "streaming_granularity": {"passed": "streaming_granularity" not in failed},
+                      "failed": list(failed)}}
 
 
 def test_make_baselines_median_margin_and_merge(tmp_path):
@@ -284,7 +287,8 @@ def test_make_baselines_median_margin_and_merge(tmp_path):
                      _calibration_run("full", 2.0, 0.95)], margin=0.02)
     assert mode == "full"
     assert b["tok_s"] == {"single": 2.0, "c8": 4.0, "c32": 6.0, "chat16": 8.0}
-    assert b["prefix_fraction_gate"] == pytest.approx(0.95)
+    assert b["prefix_fraction_gate"] == pytest.approx(0.93)   # lowest run (0.95) minus the margin
+    assert b["head_match_gate"] == pytest.approx(0.94)        # lowest run (0.96) minus the margin
 
     out = tmp_path / "baselines.json"
     runs = []
@@ -307,8 +311,11 @@ def test_make_baselines_refuses_failed_runs_and_gates():
     bad["status"] = "fail"
     with pytest.raises(ValueError, match="did not pass"):
         build([bad], margin=0.0)
-    with pytest.raises(ValueError, match="failed the gates"):
-        build([_calibration_run("full", 1.0, 0.9, failed=["head_match"])], margin=0.0)
+    # The two absolute gates must hold for vLLM itself.
+    with pytest.raises(ValueError, match="failed the usage gate"):
+        build([_calibration_run("full", 1.0, 0.9, failed=["usage"])], margin=0.0)
+    # Head match has no threshold during calibration: this tool is what sets it.
+    build([_calibration_run("full", 1.0, 0.9, failed=["head_match"])], margin=0.0)
 
 
 def test_launcher_wraps_run_as_and_taskset(tmp_path, monkeypatch):

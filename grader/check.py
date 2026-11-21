@@ -16,7 +16,7 @@ Reported but not enforced:
 
 import os
 
-HEAD_MATCH_GATE = 0.98
+HEAD_MATCH_GATE = None   # set per run from the baselines file (calibrated from vLLM); None in calibration
 USAGE_TOLERANCE = 0.02
 GRANULARITY_MIN = 0.5
 
@@ -99,13 +99,13 @@ def aggregate(checks):
     }
 
 
-def gates(all_checks, prefix_gate, enforced):
+def gates(all_checks, prefix_gate, enforced, head_gate=None):
     """The correctness gates, pooled over every workload request of the run."""
     agg = aggregate(all_checks)
     g = {
         "enforced": enforced,
         "scope": "pooled over all workload requests",
-        "head_match": {"value": agg["head_match_rate"], "threshold": HEAD_MATCH_GATE},
+        "head_match": {"value": agg["head_match_rate"], "threshold": head_gate},
         "prefix_fraction": {"value": agg["prefix_fraction"], "threshold": prefix_gate},
         "usage": {"value": agg["usage_failures"], "threshold": 0, "checked": agg["usage_checked"]},
         "streaming_granularity": {"value": agg["granularity_failures"], "threshold": 0,
@@ -113,7 +113,7 @@ def gates(all_checks, prefix_gate, enforced):
     }
     hm = agg["head_match_rate"]
     pf = agg["prefix_fraction"]
-    g["head_match"]["passed"] = hm is not None and hm >= HEAD_MATCH_GATE
+    g["head_match"]["passed"] = None if head_gate is None else (hm is not None and hm >= head_gate)
     g["prefix_fraction"]["passed"] = None if prefix_gate is None else (pf is not None and pf >= prefix_gate)
     g["usage"]["passed"] = agg["usage_failures"] == 0
     g["streaming_granularity"]["passed"] = agg["granularity_failures"] == 0
